@@ -1,0 +1,28 @@
+name: Check
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Run on Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+      
+      - name: setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      
+      - name: check
+        run: |
+          python package-embed.py --base https://www.python.org/ftp/python/3.14.7/python-3.14.7-embed-amd64.zip rich
+          python -m zipfile --extract artifact.zip artifact
+          .\artifact\python.exe -s -m rich --help

@@ -1,10 +1,11 @@
 #define PY_SSIZE_T_CLEAN
-#include <python3.14/Python.h>
+#include <Python.h>
 
 #define MODULE ""
 #define ENTRY ""
 
-// https://docs.python.org/3.12/extending/embedding.html#very-high-level-embedding
+// § 1.3. Pure Embedding
+// https://docs.python.org/3.14/extending/embedding.html#pure-embedding
 
 int
 main(int argc, char *argv[])
@@ -13,8 +14,10 @@ main(int argc, char *argv[])
     PyConfig config;
     PyConfig_InitPythonConfig(&config);
 
+    // if ._pth file present...
+    // isolated -> 1; use_environment -> 0; site_import -> 0; safe_path -> 1
     config.isolated = 1; // for embedded
-    // user_site_directory set by isolated mode
+    // config.user_site_directory = 0; // set by isolated mode
 
     // set program name
     status = PyConfig_SetBytesString(&config, &config.program_name, argv[0]);
@@ -38,7 +41,6 @@ main(int argc, char *argv[])
         goto exception;
     }
     PyConfig_Clear(&config);
-    // Py_Initialize(); // replace by Py_InitializeFromConfig
 
     // adjust module search path through sys.path
     PyObject *sys_path = PySys_GetObject("path"); // sys.path

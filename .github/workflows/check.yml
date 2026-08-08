@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'package-embed.py'
 
 permissions:
   contents: read

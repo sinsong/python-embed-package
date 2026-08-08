@@ -3,7 +3,7 @@ Windows 平台打包工具，使用 `python-version-embed-arch.zip`
 ## 使用方式
 
 命令行参数：
-- `--base URL-or-filepath` python embed 压缩包的下载目录，或者你下载好传路径
+- `--base URL-or-filepath` python embed 压缩包的下载地址，或者你下载好传路径
 - `--getpip filepath` 可选，你下载好 PyPA get-pip.py 把路径传给他
 - `--output` 可选，输出文件名，默认叫 `artifact.zip`
 - 剩下的参数将传递给 `pip install`

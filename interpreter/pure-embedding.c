@@ -11,6 +11,7 @@ int
 main(int argc, char *argv[])
 {
     PyStatus status;
+
     PyConfig config;
     PyConfig_InitPythonConfig(&config);
 
@@ -18,6 +19,7 @@ main(int argc, char *argv[])
     // isolated -> 1; use_environment -> 0; site_import -> 0; safe_path -> 1
     config.isolated = 1; // for embedded
     // config.user_site_directory = 0; // set by isolated mode
+    config.parse_argv = 2; // disable consume argv for python interpreter
 
     // set program name
     status = PyConfig_SetBytesString(&config, &config.program_name, argv[0]);
@@ -26,8 +28,8 @@ main(int argc, char *argv[])
         goto exception;
     }
 
-    // read config
-    status = PyConfig_Read(&config);
+    // necessary, for pass argc, argv to python environment
+    status = PyConfig_SetBytesArgv(&config, argc, argv);
     if (PyStatus_Exception(status))
     {
         goto exception;
@@ -42,23 +44,19 @@ main(int argc, char *argv[])
     }
     PyConfig_Clear(&config);
 
-    // adjust module search path through sys.path
-    PyObject *sys_path = PySys_GetObject("path"); // sys.path
-    PyObject *additional_module_path = PyUnicode_DecodeFSDefault(".");
-    PyList_Append(sys_path, additional_module_path);
+    // Python Initialize Success
 
     // -------------------------------------------------------------------------
 
     PyObject *pName;
     PyObject *pModule;
     PyObject *pFunc;
-    PyObject *pArgs;
     PyObject *pValue;
 
+    // import
     pName = PyUnicode_DecodeFSDefault(MODULE);
     pModule = PyImport_Import(pName);
     Py_DECREF(pName);
-
     if (pModule == NULL)
     {
         PyErr_Print();
@@ -66,8 +64,8 @@ main(int argc, char *argv[])
         return 1;
     }
 
+    // get function
     pFunc = PyObject_GetAttrString(pModule, ENTRY);
-
     if (!pFunc || !PyCallable_Check(pFunc))
     {
         if (PyErr_Occurred())
@@ -78,20 +76,8 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    pArgs = PyTuple_New(argc - 1); // crossbone to next line
-    for (int i = 0; i < argc - 1; ++i)
-    {
-        pValue = PyUnicode_DecodeFSDefault(argv[i + 1]);
-           if (!pValue)
-        {
-            Py_DECREF(pArgs);
-            Py_DECREF(pModule);
-            return 1;
-        }
-        PyTuple_SetItem(pArgs, i, pValue);
-    }
-
-    pValue = PyObject_CallObject(pFunc, pArgs);
+    // call
+    pValue = PyObject_CallObject(pFunc, NULL);
     if (pValue == NULL)
     {
         Py_DECREF(pFunc);
@@ -99,8 +85,6 @@ main(int argc, char *argv[])
         PyErr_Print();
         fprintf(stderr, "call failed\n");
     }
-
-    Py_DECREF(pArgs);
 
     long ret = PyLong_AsLong(pValue);
     Py_DECREF(pValue);
@@ -113,5 +97,9 @@ main(int argc, char *argv[])
 
 exception:
     PyConfig_Clear(&config);
+    if (PyStatus_IsExit(status))
+    {
+        return status.exitcode;
+    }
     Py_ExitStatusException(status);
 }

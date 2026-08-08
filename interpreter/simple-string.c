@@ -1,9 +1,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-// pip distlib SCRIPT_TEMPLATE
-// https://github.com/pypa/pip/blob/f7bfe280f00831b249534fc8e8a549cb48b3d166/src/pip/_vendor/distlib/scripts.py#L42-L49
-
 int
 main(int argc, char *argv[])
 {
@@ -23,6 +20,7 @@ main(int argc, char *argv[])
     }
     PyConfig_Clear(&config);
 
+    // 修改这里
     PyRun_SimpleString("from time import time,ctime\n"
                        "print('Today is', ctime(time()))\n");
     if (Py_FinalizeEx() < 0) {
